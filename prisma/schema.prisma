@@ -7,6 +7,35 @@ datasource db {
   provider = "postgresql"
 }
 
+enum DatabaseType {
+  POSTGRES
+}
+
+enum SslMode {
+  disable
+  allow
+  prefer
+  require
+  verify_ca
+  verify_full
+}
+
+model DatabaseConnection {
+  id            String       @id @default(cuid())
+  name          String
+  type          DatabaseType @default(POSTGRES)
+  connectionUrl String?
+  host          String
+  port          Int          @default(5432)
+  database      String
+  username      String
+  password      String
+  sslMode       SslMode      @default(require)
+  isActive      Boolean      @default(false)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+}
+
 model User { 
   id    Int     @id @default(autoincrement()) 
   email String  @unique
