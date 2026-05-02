@@ -6,8 +6,3 @@ dist
 /generated
 
 .DS_STORE
-
-
-#Design files
-/design
-/architecture
