@@ -92,21 +92,32 @@ export class PostgresAdapter implements DatabaseAdapter {
             c.data_type AS "dataType",
             c.is_nullable = 'YES' AS "isNullable",
             c.column_default AS "defaultValue",
-            CASE
-              WHEN tc.constraint_type = 'PRIMARY KEY' THEN 'PK'
-              WHEN tc.constraint_type = 'FOREIGN KEY' THEN 'FK'
-              WHEN tc.constraint_type = 'UNIQUE' THEN 'UN'
-              ELSE NULL
-            END AS "keyType"
+            (
+              SELECT 
+                CASE
+                  WHEN tc.constraint_type = 'PRIMARY KEY' THEN 'PK'
+                  WHEN tc.constraint_type = 'FOREIGN KEY' THEN 'FK'
+                  WHEN tc.constraint_type = 'UNIQUE' THEN 'UN'
+                  ELSE NULL
+                END
+              FROM information_schema.key_column_usage kcu
+              JOIN information_schema.table_constraints tc
+                ON kcu.constraint_name = tc.constraint_name
+                AND kcu.table_schema = tc.table_schema
+                AND kcu.table_name = tc.table_name
+              WHERE kcu.table_schema = c.table_schema
+                AND kcu.table_name = c.table_name
+                AND kcu.column_name = c.column_name
+              ORDER BY 
+                CASE 
+                  WHEN tc.constraint_type = 'PRIMARY KEY' THEN 1
+                  WHEN tc.constraint_type = 'FOREIGN KEY' THEN 2
+                  WHEN tc.constraint_type = 'UNIQUE' THEN 3
+                  ELSE 4
+                END
+              LIMIT 1
+            ) AS "keyType"
           FROM information_schema.columns c
-          LEFT JOIN information_schema.key_column_usage kcu
-            ON c.table_schema = kcu.table_schema
-            AND c.table_name = kcu.table_name
-            AND c.column_name = kcu.column_name
-          LEFT JOIN information_schema.table_constraints tc
-            ON kcu.constraint_name = tc.constraint_name
-            AND kcu.table_schema = tc.table_schema
-            AND kcu.table_name = tc.table_name
           WHERE c.table_schema = $1
             AND c.table_name = $2
           ORDER BY c.ordinal_position
