@@ -22,4 +22,9 @@ export class IntrospectionController {
   ) {
     return this.introspectionService.getTableDetails(schema, table);
   }
+
+  @Get('schema/:schema/full')
+  getFullSchema(@Param('schema') schema: string) {
+    return this.introspectionService.getFullSchema(schema);
+  }
 }

@@ -46,6 +46,18 @@ export interface TablePreviewResult {
   offset: number;
 }
 
+export interface CreateTableDto {
+  name: string;
+  columns: DatabaseTableColumn[];
+}
+
+export interface AlterTableDto {
+  name?: string;
+  addColumns?: DatabaseTableColumn[];
+  dropColumns?: string[];
+  modifyColumns?: DatabaseTableColumn[];
+}
+
 export interface DatabaseAdapter {
   testConnection(connection: ConnectionConfig): Promise<ConnectionTestResult>;
   listSchemas(connection: ConnectionConfig): Promise<DatabaseSchemaSummary[]>;
@@ -58,6 +70,10 @@ export interface DatabaseAdapter {
     schema: string,
     table: string,
   ): Promise<DatabaseTableDetails>;
+  getFullSchema(
+    connection: ConnectionConfig,
+    schema: string,
+  ): Promise<DatabaseTableDetails[]>;
   previewRows(
     connection: ConnectionConfig,
     schema: string,
@@ -65,6 +81,22 @@ export interface DatabaseAdapter {
     limit: number,
     offset: number,
   ): Promise<TablePreviewResult>;
+  createTable(
+    connection: ConnectionConfig,
+    schema: string,
+    table: CreateTableDto,
+  ): Promise<void>;
+  alterTable(
+    connection: ConnectionConfig,
+    schema: string,
+    table: string,
+    changes: AlterTableDto,
+  ): Promise<void>;
+  dropTable(
+    connection: ConnectionConfig,
+    schema: string,
+    table: string,
+  ): Promise<void>;
 }
 
 export interface ConnectionConfig {
