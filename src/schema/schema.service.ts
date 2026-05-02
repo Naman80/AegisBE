@@ -1,27 +1,33 @@
 import { Injectable } from '@nestjs/common';
-import { DatabaseAdapterService } from '../database-adapters/database-adapter.service.js';
-import { ConnectionsService } from '../connections/connections.service.js';
-import { CreateTableDto, AlterTableDto } from '../database-adapters/interfaces/database-adapter.interface.js';
+import { ConnectionManager } from '../datasource/connection.manager.js';
+import { AlterEntityDto, EntityFieldDefinition } from '../providers/database/database.interface.js';
 
 @Injectable()
 export class SchemaService {
-  constructor(
-    private readonly connectionsService: ConnectionsService,
-    private readonly adapters: DatabaseAdapterService,
-  ) {}
+  constructor(private readonly connectionManager: ConnectionManager) {}
 
-  async createTable(schema: string, table: CreateTableDto) {
-    const connection = await this.connectionsService.getActiveConnectionConfig();
-    return this.adapters.getAdapter(connection).createTable(connection, schema, table);
+  async getEntitySchema(datasourceId: string, namespace: string, entity: string) {
+    const adapter = await this.connectionManager.getAdapter(datasourceId);
+    return adapter.getEntitySchema(namespace, entity);
   }
 
-  async alterTable(schema: string, table: string, changes: AlterTableDto) {
-    const connection = await this.connectionsService.getActiveConnectionConfig();
-    return this.adapters.getAdapter(connection).alterTable(connection, schema, table, changes);
+  async getBulkSchema(datasourceId: string, namespace: string) {
+    const adapter = await this.connectionManager.getAdapter(datasourceId);
+    return adapter.getBulkSchema(namespace);
   }
 
-  async dropTable(schema: string, table: string) {
-    const connection = await this.connectionsService.getActiveConnectionConfig();
-    return this.adapters.getAdapter(connection).dropTable(connection, schema, table);
+  async createEntity(datasourceId: string, namespace: string, name: string, fields: EntityFieldDefinition[]) {
+    const adapter = await this.connectionManager.getAdapter(datasourceId);
+    return adapter.createEntity(namespace, name, fields);
+  }
+
+  async alterEntity(datasourceId: string, namespace: string, name: string, changes: AlterEntityDto) {
+    const adapter = await this.connectionManager.getAdapter(datasourceId);
+    return adapter.alterEntity(namespace, name, changes);
+  }
+
+  async dropEntity(datasourceId: string, namespace: string, name: string) {
+    const adapter = await this.connectionManager.getAdapter(datasourceId);
+    return adapter.dropEntity(namespace, name);
   }
 }

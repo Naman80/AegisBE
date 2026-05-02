@@ -1,33 +1,53 @@
-import { Body, Controller, Delete, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
 import { SchemaService } from './schema.service.js';
-import { CreateTableDto, AlterTableDto } from '../database-adapters/interfaces/database-adapter.interface.js';
+import type { AlterEntityDto, EntityFieldDefinition } from '../providers/database/database.interface.js';
 
-@Controller('schema')
+@Controller('datasources/:id/namespaces/:namespace/entities')
 export class SchemaController {
   constructor(private readonly schemaService: SchemaService) {}
 
-  @Post('tables')
-  createTable(
-    @Query('schema') schema = 'public',
-    @Body() table: CreateTableDto
+  @Get('schema/bulk')
+  getBulkSchema(
+    @Param('id') id: string,
+    @Param('namespace') namespace: string
   ) {
-    return this.schemaService.createTable(schema, table);
+    return this.schemaService.getBulkSchema(id, namespace);
   }
 
-  @Patch('tables/:table')
-  alterTable(
-    @Param('table') table: string,
-    @Query('schema') schema = 'public',
-    @Body() changes: AlterTableDto
+  @Get(':entity/schema')
+  getEntitySchema(
+    @Param('id') id: string,
+    @Param('namespace') namespace: string,
+    @Param('entity') entity: string
   ) {
-    return this.schemaService.alterTable(schema, table, changes);
+    return this.schemaService.getEntitySchema(id, namespace, entity);
   }
 
-  @Delete('tables/:table')
-  dropTable(
-    @Param('table') table: string,
-    @Query('schema') schema = 'public'
+  @Post()
+  createEntity(
+    @Param('id') id: string,
+    @Param('namespace') namespace: string,
+    @Body() body: { name: string; fields: EntityFieldDefinition[] }
   ) {
-    return this.schemaService.dropTable(schema, table);
+    return this.schemaService.createEntity(id, namespace, body.name, body.fields);
+  }
+
+  @Patch(':entity')
+  alterEntity(
+    @Param('id') id: string,
+    @Param('namespace') namespace: string,
+    @Param('entity') entity: string,
+    @Body() changes: AlterEntityDto
+  ) {
+    return this.schemaService.alterEntity(id, namespace, entity, changes);
+  }
+
+  @Delete(':entity')
+  dropEntity(
+    @Param('id') id: string,
+    @Param('namespace') namespace: string,
+    @Param('entity') entity: string
+  ) {
+    return this.schemaService.dropEntity(id, namespace, entity);
   }
 }
