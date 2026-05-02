@@ -4,7 +4,7 @@ import { AlterEntityDto, EntityFieldDefinition } from '../providers/database/dat
 
 @Injectable()
 export class SchemaService {
-  constructor(private readonly connectionManager: ConnectionManager) {}
+  constructor(private readonly connectionManager: ConnectionManager) { }
 
   async getEntitySchema(datasourceId: string, namespace: string, entity: string) {
     const adapter = await this.connectionManager.getAdapter(datasourceId);

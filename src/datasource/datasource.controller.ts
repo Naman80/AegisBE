@@ -25,12 +25,15 @@ export class DatasourceController {
   }
 
   @Patch(':id')
-  updateDatasource(@Param('id') id: string, @Body() dto: any) {
-    return this.datasourceService.updateDatasource(id, dto);
+  async updateDatasource(@Param('id') id: string, @Body() dto: any) {
+    const result = await this.datasourceService.updateDatasource(id, dto);
+    await this.connectionManager.closeConnection(id);
+    return result;
   }
 
   @Delete(':id')
-  deleteDatasource(@Param('id') id: string) {
+  async deleteDatasource(@Param('id') id: string) {
+    await this.connectionManager.closeConnection(id);
     return this.datasourceService.deleteDatasource(id);
   }
 
@@ -46,7 +49,9 @@ export class DatasourceController {
   }
 
   @Post(':id/activate')
-  activateDatasource(@Param('id') id: string) {
-    return this.datasourceService.setActive(id);
+  async activateDatasource(@Param('id') id: string) {
+    const result = await this.datasourceService.setActive(id);
+    await this.connectionManager.closeConnection(id);
+    return result;
   }
 }

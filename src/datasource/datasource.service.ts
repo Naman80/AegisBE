@@ -69,19 +69,44 @@ export class DatasourceService {
   }
 
   private normalizeInput(dto: any) {
-    // Simple normalization for now, can be expanded with URL parsing if needed
-    if (!dto.host || !dto.port || !dto.database || !dto.username || !dto.password) {
-      throw new BadRequestException('Missing required connection fields');
+    const normalized = { ...dto };
+
+    if (dto.mode === 'url' && dto.connectionUrl) {
+      try {
+        const url = new URL(dto.connectionUrl);
+        normalized.host = url.hostname;
+        normalized.port = url.port ? parseInt(url.port) : 5432;
+        normalized.database = url.pathname.replace(/^\//, '');
+        normalized.username = decodeURIComponent(url.username);
+        normalized.password = decodeURIComponent(url.password);
+
+        const sslMode = url.searchParams.get('sslmode');
+        if (sslMode) {
+          normalized.sslMode = sslMode;
+        }
+      } catch (e) {
+        throw new BadRequestException('Invalid connection URL format');
+      }
     }
+
+    const requiredFields = ['name', 'host', 'port', 'database', 'username', 'password'];
+    const missingFields = requiredFields.filter((f) => !normalized[f]);
+
+    if (missingFields.length > 0) {
+      throw new BadRequestException(
+        `Missing required fields: ${missingFields.join(', ')}`,
+      );
+    }
+
     return {
-      name: dto.name,
-      type: dto.type,
-      host: dto.host,
-      port: dto.port,
-      database: dto.database,
-      username: dto.username,
-      password: dto.password,
-      sslMode: dto.sslMode ?? 'require',
+      name: normalized.name,
+      type: normalized.type || 'POSTGRES',
+      host: normalized.host,
+      port: normalized.port,
+      database: normalized.database,
+      username: normalized.username,
+      password: normalized.password,
+      sslMode: normalized.sslMode ?? 'require',
     };
   }
 }
