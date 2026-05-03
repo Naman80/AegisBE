@@ -28,7 +28,7 @@ export class PostgresAdapter implements DatabaseAdapter {
         `
           SELECT schema_name AS name
           FROM information_schema.schemata
-          WHERE schema_name NOT IN ('pg_catalog', 'information_schema')
+          WHERE schema_name NOT IN ('pg_catalog', 'information_schema' , 'pg_toast' , 'ppg')
           ORDER BY schema_name
         `
       );
@@ -87,7 +87,7 @@ export class PostgresAdapter implements DatabaseAdapter {
         `,
         [namespace, entity]
       );
-      
+
       return result.rows.map(row => ({
         name: row.name,
         type: this.normalizeType(row.type),
@@ -100,13 +100,14 @@ export class PostgresAdapter implements DatabaseAdapter {
     }
   }
 
-  async getBulkSchema(namespace: string): Promise<Record<string, Field[]>> {
+  async getAllEntitySchema(namespace: string): Promise<Record<string, { type: string; fields: Field[] }>> {
     const pool = this.getPool();
     try {
       const result = await pool.query(
         `
           SELECT
             c.table_name AS entity,
+            t.table_type AS entity_type,
             c.column_name AS name,
             c.data_type AS type,
             c.is_nullable = 'YES' AS "isNullable",
@@ -120,18 +121,22 @@ export class PostgresAdapter implements DatabaseAdapter {
                 AND tc.constraint_type = 'PRIMARY KEY'
             ) AS "isPrimaryKey"
           FROM information_schema.columns c
+          JOIN information_schema.tables t ON c.table_schema = t.table_schema AND c.table_name = t.table_name
           WHERE c.table_schema = $1
           ORDER BY c.table_name, c.ordinal_position
         `,
         [namespace]
       );
 
-      const bulkSchema: Record<string, Field[]> = {};
+      const allEntitySchemas: Record<string, { type: string; fields: Field[] }> = {};
       for (const row of result.rows) {
-        if (!bulkSchema[row.entity]) {
-          bulkSchema[row.entity] = [];
+        if (!allEntitySchemas[row.entity]) {
+          allEntitySchemas[row.entity] = {
+            type: row.entity_type === 'VIEW' ? 'view' : 'table',
+            fields: []
+          };
         }
-        bulkSchema[row.entity].push({
+        allEntitySchemas[row.entity].fields.push({
           name: row.name,
           type: this.normalizeType(row.type),
           isNullable: row.isNullable,
@@ -139,9 +144,9 @@ export class PostgresAdapter implements DatabaseAdapter {
           defaultValue: row.defaultValue ?? undefined
         });
       }
-      return bulkSchema;
+      return allEntitySchemas;
     } catch (error) {
-      throw new InternalServerErrorException(`Failed to get bulk schema for ${namespace}: ${error.message}`);
+      throw new InternalServerErrorException(`Failed to get all entity schemas for ${namespace}: ${error.message}`);
     }
   }
 
@@ -196,7 +201,7 @@ export class PostgresAdapter implements DatabaseAdapter {
 
       if (rename) await pool.query(`ALTER TABLE ${tableRef} ${rename}`);
       if (others.length > 0) {
-        const currentRef = rename 
+        const currentRef = rename
           ? `${this.escapeIdentifier(namespace)}.${this.escapeIdentifier(changes.name)}`
           : tableRef;
         await pool.query(`ALTER TABLE ${currentRef} ${others.join(', ')}`);
@@ -207,13 +212,13 @@ export class PostgresAdapter implements DatabaseAdapter {
   }
 
   async dropEntity(namespace: string, name: string): Promise<void> {
-    const pool = this.getPool();
-    const tableRef = `${this.escapeIdentifier(namespace)}.${this.escapeIdentifier(name)}`;
-    try {
-      await pool.query(`DROP TABLE ${tableRef}`);
-    } catch (error) {
-      throw new InternalServerErrorException(`Failed to drop entity ${namespace}.${name}: ${error.message}`);
-    }
+    // const pool = this.getPool();
+    // const tableRef = `${this.escapeIdentifier(namespace)}.${this.escapeIdentifier(name)}`;
+    // try {
+    //   await pool.query(`DROP TABLE ${tableRef}`);
+    // } catch (error) {
+    //   throw new InternalServerErrorException(`Failed to drop entity ${namespace}.${name}: ${error.message}`);
+    // }
   }
 
   async query(input: {

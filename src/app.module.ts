@@ -7,7 +7,7 @@ import { PrismaModule } from './prisma/prisma.module.js';
 import { DatabaseProvidersModule } from './providers/database/database-providers.module.js';
 import { DatasourceModule } from './datasource/datasource.module.js';
 import { ExplorerModule } from './explorer/explorer.module.js';
-import { SchemaModule } from './schema/schema.module.js';
+import { EntityModule } from './entity/entity.module.js';
 import { QueryModule } from './query/query.module.js';
 
 @Module({
@@ -18,7 +18,7 @@ import { QueryModule } from './query/query.module.js';
     DatabaseProvidersModule,
     DatasourceModule,
     ExplorerModule,
-    SchemaModule,
+    EntityModule,
     QueryModule,
   ],
   controllers: [AppController],

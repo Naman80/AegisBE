@@ -10,7 +10,7 @@ export class ConnectionManager implements OnModuleDestroy {
   constructor(
     private readonly datasourceService: DatasourceService,
     private readonly databaseFactory: DatabaseFactory,
-  ) {}
+  ) { }
 
   async getAdapter(datasourceId: string): Promise<DatabaseAdapter> {
     // Check cache
@@ -32,6 +32,7 @@ export class ConnectionManager implements OnModuleDestroy {
 
     // Create and connect adapter
     const adapter = await this.databaseFactory.getAdapter(config.type);
+
     await adapter.connect(config);
 
     // Cache it

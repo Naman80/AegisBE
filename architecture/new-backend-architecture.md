@@ -9,7 +9,7 @@ A scalable, provider-agnostic backend (NestJS) that supports multiple database t
 - **Adapters**: Pure driver wrappers. No business logic or persistence knowledge.
 - **ConnectionManager**: Decouples connection lifecycle (pooling, caching) from domain logic.
 - **DatasourceService**: Pure persistence layer for connection metadata (Prisma).
-- **Domain Services**: Focus strictly on business operations (Explorer, Schema, Query).
+- **Domain Services**: Focus strictly on business operations (Explorer, Entity, Query).
 
 ### 2.2 Provider-Agnostic Terminology
 
@@ -35,7 +35,7 @@ A scalable, provider-agnostic backend (NestJS) that supports multiple database t
 src/
   datasource/          # Connection records & lifecycle (ConnectionManager)
   explorer/            # Metadata browsing (Namespaces/Entities)
-  schema/              # Structural metadata & mutations
+  entity/              # Structural metadata & mutations (Entity lifecycle)
   query/               # Query execution & normalization
   providers/
     database/          # Unified interface & factory
@@ -57,7 +57,7 @@ export interface DatabaseAdapter {
   listEntities(namespace: string): Promise<Entity[]>;
   
   getEntitySchema(namespace: string, entity: string): Promise<Field[]>;
-  getBulkSchema(namespace: string): Promise<Record<string, Field[]>>;
+  getAllEntitySchema(namespace: string): Promise<Record<string, Field[]>>;
   
   // Mutations
   createEntity(namespace: string, name: string, fields: EntityFieldDefinition[]): Promise<void>;
@@ -98,10 +98,12 @@ Each adapter is responsible for translating provider-specific data into the unif
 - `GET /datasources/:id/namespaces`: List schemas/databases.
 - `GET /datasources/:id/namespaces/:ns/entities`: List tables/collections.
 
-### 7.3 Schema APIs
+### 7.3 Entity APIs
 - `GET /datasources/:id/namespaces/:ns/entities/:entity/schema`: Get field metadata.
-- `GET /datasources/:id/namespaces/:ns/entities/schema/bulk`: Get full schema details.
+- `GET /datasources/:id/namespaces/:ns/entities/schema/all`: Get full schema details.
 - `POST /datasources/:id/namespaces/:ns/entities`: Create new entity.
+- `PATCH /datasources/:id/namespaces/:ns/entities/:entity`: Alter entity.
+- `DELETE /datasources/:id/namespaces/:ns/entities/:entity`: Drop entity.
 
 ### 7.4 Query APIs
 - `POST /datasources/:id/query`: Execute raw query.

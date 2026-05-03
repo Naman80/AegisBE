@@ -45,7 +45,7 @@ Controller (API Layer)         ↓ Service Layer (Business Logic)         ↓ Da
 
 ## 4. NestJS Module Structure
 
-src/   modules/     datasource/     explorer/     schema/     query/    providers/     database/       database.interface.ts       database.factory.ts        postgres/       mongodb/    common/     dto/     types/     utils/    config/
+src/   modules/     datasource/     explorer/     entity/       query/    providers/     database/       database.interface.ts       database.factory.ts        postgres/       mongodb/    common/     dto/     types/     utils/    config/
 
 ---
 
@@ -65,8 +65,9 @@ src/   modules/     datasource/     explorer/     schema/     query/    provider
 
 ---
 
-### 5.3 Schema Module
+### 5.3 Entity Module
 - Fetch entity schema
+- Create, Alter, Drop entities
 - Normalize structure across DBs
 
 ---
@@ -115,8 +116,12 @@ GET /datasources/:id/namespaces GET /datasources/:id/namespaces/:ns/entities GET
 
 ---
 
-### 9.3 Schema APIs
-GET /datasources/:id/namespaces/:ns/entities/:entity/schema
+### 9.3 Entity APIs
+- `GET /datasources/:id/namespaces/:ns/entities/:entity/schema`: Get field metadata.
+- `GET /datasources/:id/namespaces/:ns/entities/schema/all`: Get full schema details.
+- `POST /datasources/:id/namespaces/:ns/entities`: Create new entity.
+- `PATCH /datasources/:id/namespaces/:ns/entities/:entity`: Alter entity.
+- `DELETE /datasources/:id/namespaces/:ns/entities/:entity`: Drop entity.
 
 ---
 

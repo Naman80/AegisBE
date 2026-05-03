@@ -3,7 +3,7 @@ import { ConnectionManager } from '../datasource/connection.manager.js';
 import { AlterEntityDto, EntityFieldDefinition } from '../providers/database/database.interface.js';
 
 @Injectable()
-export class SchemaService {
+export class EntityService {
   constructor(private readonly connectionManager: ConnectionManager) { }
 
   async getEntitySchema(datasourceId: string, namespace: string, entity: string) {
@@ -11,9 +11,9 @@ export class SchemaService {
     return adapter.getEntitySchema(namespace, entity);
   }
 
-  async getBulkSchema(datasourceId: string, namespace: string) {
+  async getAllEntitySchema(datasourceId: string, namespace: string) {
     const adapter = await this.connectionManager.getAdapter(datasourceId);
-    return adapter.getBulkSchema(namespace);
+    return adapter.getAllEntitySchema(namespace);
   }
 
   async createEntity(datasourceId: string, namespace: string, name: string, fields: EntityFieldDefinition[]) {

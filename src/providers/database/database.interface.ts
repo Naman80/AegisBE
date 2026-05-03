@@ -33,7 +33,7 @@ export interface DatabaseAdapter {
   listEntities(namespace: string): Promise<Entity[]>;
   
   getEntitySchema(namespace: string, entity: string): Promise<Field[]>;
-  getBulkSchema(namespace: string): Promise<Record<string, Field[]>>;
+  getAllEntitySchema(namespace: string): Promise<Record<string, { type: string; fields: Field[] }>>;
   
   // Mutations
   createEntity(namespace: string, name: string, fields: EntityFieldDefinition[]): Promise<void>;
