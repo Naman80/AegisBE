@@ -1,4 +1,5 @@
-import { Namespace, Entity, Field, QueryResult } from '../../common/types/normalization.js';
+import { Namespace, Entity, Field } from '../../common/types/normalization.js';
+import { QueryResult, QueryInput } from '../../query/types/query.types.js';
 
 export interface ConnectionConfig {
   type: 'postgres' | 'mongodb' | 'mysql';
@@ -40,13 +41,7 @@ export interface DatabaseAdapter {
   alterEntity(namespace: string, name: string, changes: AlterEntityDto): Promise<void>;
   dropEntity(namespace: string, name: string): Promise<void>;
   
-  query(input: {
-    namespace: string;
-    entity?: string;
-    query: string;
-    limit?: number;
-    offset?: number;
-  }): Promise<QueryResult>;
+  query(input: QueryInput): Promise<QueryResult>;
   
   testConnection(config: ConnectionConfig): Promise<{ success: boolean; message: string }>;
 }

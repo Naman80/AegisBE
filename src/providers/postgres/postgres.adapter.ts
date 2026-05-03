@@ -1,7 +1,8 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { Pool } from 'pg';
 import { DatabaseAdapter, ConnectionConfig } from '../database/database.interface.js';
-import { Namespace, Entity, Field, QueryResult } from '../../common/types/normalization.js';
+import { Namespace, Entity, Field } from '../../common/types/normalization.js';
+import { QueryResult, QueryInput } from '../../query/types/query.types.js';
 
 @Injectable()
 export class PostgresAdapter implements DatabaseAdapter {
@@ -221,18 +222,22 @@ export class PostgresAdapter implements DatabaseAdapter {
     // }
   }
 
-  async query(input: {
-    namespace: string;
-    entity?: string;
-    query: string;
-    limit?: number;
-    offset?: number;
-  }): Promise<QueryResult> {
+  async query(input: QueryInput): Promise<QueryResult> {
     const pool = this.getPool();
     const startTime = Date.now();
+    const client = await pool.connect();
 
     try {
-      let sql = input.query;
+      // Set search path to the requested namespace
+      await client.query(`SET search_path TO ${this.escapeIdentifier(input.namespace)}`);
+
+      let sql = input.query.trim();
+
+      if (sql.endsWith(';')) {
+        sql = sql.slice(0, -1);
+      }
+
+      // Basic LIMIT/OFFSET handling if not already in SQL
       if (input.limit && !sql.toLowerCase().includes('limit')) {
         sql += ` LIMIT ${input.limit}`;
       }
@@ -240,17 +245,20 @@ export class PostgresAdapter implements DatabaseAdapter {
         sql += ` OFFSET ${input.offset}`;
       }
 
-      const result = await pool.query(sql);
-      const executionTimeMs = Date.now() - startTime;
+      const result = await client.query(sql);
+      const timeMs = Date.now() - startTime;
 
       return {
         columns: result.fields.map(f => f.name),
         rows: result.rows,
         totalCount: result.rowCount ?? result.rows.length,
-        executionTimeMs
+        timeMs,
+        truncated: input.limit ? result.rows.length >= input.limit : false
       };
     } catch (error) {
       throw new InternalServerErrorException(`Query execution failed: ${error.message}`);
+    } finally {
+      client.release();
     }
   }
 

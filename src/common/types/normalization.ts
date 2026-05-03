@@ -1,3 +1,7 @@
+import { QueryResult, RecordData } from '../../query/types/query.types.js';
+
+export type { QueryResult, RecordData };
+
 export interface Namespace {
   name: string;
   description?: string;
@@ -16,13 +20,4 @@ export interface Field {
   isPrimaryKey: boolean;
   defaultValue?: string;
   description?: string;
-}
-
-export interface RecordData extends Record<string, any> {}
-
-export interface QueryResult {
-  columns: string[];
-  rows: RecordData[];
-  totalCount?: number;
-  executionTimeMs?: number;
 }
